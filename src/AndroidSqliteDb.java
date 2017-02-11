@@ -7,82 +7,94 @@ import android.database.*;
 
 public class AndroidSqliteDb
 {
-	private static String path = "/storage/emulated/0/Android/data/com.vel.barcodetosheet/files/";	
-	private static String dbName = "barcode_to_sheet.db";
-	private static String dbFullName = path +  dbName;
-	private static SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFullName, null, 0);
-	private static String query = "select sqlite_version() AS sqlite_version";
-	private static Cursor cursor = null;	
-	private static int colCount = 0;
+	private static String cPath = "/storage/emulated/0/Android/data/com.vel.barcodetosheet/files/";	
+	private static String cDbName = "barcode_to_sheet.db";
+	private static String cDbFullName = cPath +  cDbName;
+	private static SQLiteDatabase cDb = SQLiteDatabase.openDatabase(cDbFullName, null, 0);
+	private static String cQuery = "select sqlite_version() AS sqlite_version";
+	private static Cursor cCursor = null;	
+	private static int cColCount = 0;
 	
 	public static void main(String[] args)
 	{   
-		System.out.println("Database: " + dbName);
+		System.out.println("Database: " + cDbName);
 		System.out.println("Db type: Sqlite");
 		System.out.print("Db version: ");
 		
-	    cursor = db.rawQuery(query, null);
-		while (cursor.moveToNext())
+	    cCursor = cDb.rawQuery(cQuery, null);
+		while (cCursor.moveToNext())
 		{
-			System.out.println(cursor.getString(0));
+			System.out.println(cCursor.getString(0));
 		}	
-		cursor.close();
+		cCursor.close();
 		System.out.println("All tables: ");
-		query = "SELECT name FROM sqlite_master WHERE type='table'";
-		cursor = db.rawQuery(query, null);
+		cQuery = "SELECT name FROM sqlite_master WHERE type='table'";
+		cCursor = cDb.rawQuery(cQuery, null);
 
-	    while (cursor.moveToNext())
+	    while (cCursor.moveToNext())
 		{
-			System.out.println("   " + cursor.getString(0));
+			System.out.println("   " + cCursor.getString(0));
 		}
-		cursor.close();
+		cCursor.close();
 
 		
 
 		Scanner input = new Scanner(System.in);
         while (true)
 		{
+			String lPrevQuery = cQuery; 
 			System.out.print("$: ");
-			query = input.nextLine();
+			cQuery = input.nextLine();
 			
-			if (query.isEmpty()) break;
+			if (cQuery.isEmpty()) break;
 			input.reset();
 			
-			execute(query);
-			
+			switch (cQuery) {
+				case "s" : {
+				   save(lPrevQuery);
+				   break;
+				}
+				default : execute(cQuery);
+			}
+						
 		}
 		
-		db.close();
+		cDb.close();
 	}
 	
 	public static void execute(String pRawQuery) {
 		try {
-			cursor = db.rawQuery(pRawQuery, null);
-			colCount = cursor.getColumnCount();
+			cCursor = cDb.rawQuery(pRawQuery, null);
+			cColCount = cCursor.getColumnCount();
 			int i=0;
-			String keyword = query.substring(0,6);
+			String lKeyword = cQuery.length() > 6 ? cQuery.substring(0,6) : "";
 
-			if ( keyword.equals("select")) { 
+			if ( lKeyword.equals("select")) { 
 
-				for (i = 0;i < colCount - 1;i++) 
-					System.out.print("'" + padRight(cursor.getColumnName(i), 10) + "'");	
-				System.out.println(cursor.getColumnName(i));
+				for (i = 0;i < cColCount - 1;i++) 
+					System.out.print("'" + padRight(cCursor.getColumnName(i), 10) + "'");	
+				System.out.println("'" + padRight(cCursor.getColumnName(i), 10) + "'");
 			}
-			while (cursor.moveToNext())
+			while (cCursor.moveToNext())
 			{			
-				for (i = 0;i < colCount - 1;i++) 
-					System.out.print("'" + padRight(cursor.getString(i), 10) + "'");
-				System.out.println(cursor.getString(i));
+				for (i = 0;i < cColCount - 1;i++) 
+					System.out.print("'" + padRight(cCursor.getString(i), 10) + "'");
+				System.out.println("'" + padRight(cCursor.getString(i), 10) + "'");
 			}
 		} catch (Exception e){
 			System.out.println(e);
 		} finally {
-			cursor.close();
+			cCursor.close();
 		}
 	}
 
 	public static String padRight(String s, int n)
 	{
 		return String.format("%1$-" + n + "s", s);  
+	}
+	
+	public static void save(String pQuery) {
+		String lDml = "insert into queries (query) values (\"" + pQuery + "\")";
+		execute(lDml);
 	}
 }
